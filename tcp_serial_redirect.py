@@ -1,4 +1,4 @@
-
+from datetime import datetime, date, time
 
 import sys
 import os
@@ -131,6 +131,7 @@ Takes a serial connection and transfers data in a timely manner to a remote netw
 
             if data and (diff > 5 or int(binascii.b2a_hex(data[0]), 16) == len(data)):
                 if options.sniff:
+                    sys.stdout.write(str(datetime.now()) + ": ")
                     i = 0
 
                     for c in binascii.b2a_hex(data):
