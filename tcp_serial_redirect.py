@@ -124,6 +124,7 @@ Takes a serial connection and transfers data in a timely manner to a remote netw
         if len(data) == 0:
             mark = time.time()
             diff = 0
+            time.sleep(1/1000.0)
         else:
             diff = (time.time() - mark)
 
