@@ -133,7 +133,7 @@ Takes a serial connection and transfers data in a timely manner to a remote netw
 
             if data and (diff > 5 or int(binascii.b2a_hex(data[0]), 16) == len(data)):
                 if options.sniff:
-                    sys.stdout.write(str(datetime.now()) + ": ")
+                    sys.stdout.write("<<" + str(datetime.now()) + ": ")
                     i = 0
 
                     for c in binascii.b2a_hex(data):
@@ -144,9 +144,27 @@ Takes a serial connection and transfers data in a timely manner to a remote netw
                     print ""
 
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.connect(("127.0.0.1", options.port))
+                sock.settimeout(30)
+                sock.connect(("77.247.156.228", options.port))
+                ##sock.connect(("127.0.0.1", options.port))
                 sock.send(data)
-                sock.close()
+                try:
+                    resp = sock.recv(128)
+
+                    if len(resp) != 0:
+                        if options.sniff:
+                            sys.stdout.write(">>" + str(datetime.now()) + ": ")
+
+                            for c in binascii.b2a_hex(resp):
+                                sys.stdout.write(c)
+                                if (i % 2): sys.stdout.write(" ")
+                                i = i+1
+
+                        print " - wrote: " + str(ser.write(resp))
+                        resp = ""
+                    sock.close()
+                except socket.error, msg:
+                    False
 
                 mark = time.time()
                 data = ""
