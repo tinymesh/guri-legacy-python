@@ -56,8 +56,9 @@ class ProxyClient(protocol.Protocol):
 			n = self.device.inWaiting()
 			if n:
 				buf += self.device.read(n)
-			self.log_payload(buf, ">>", 1)
-			self.transport.write(buf)
+			if len(buf) > 0:
+				self.log_payload(buf, ">>", 1)
+				self.transport.write(buf)
 		self.alive = False
 		self.log("ending serial thread")
 
