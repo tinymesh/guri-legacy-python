@@ -8,13 +8,14 @@ import sys
 log.startLogging(sys.stdout)
 
 client_list = []
+device_list = []
 
 class SerialClient(Protocol):
 	def __init__(self, network, options):
 		self.options = options
 		self.network = network
 		self.buf     = ""
-		self.timeout = 0.02
+		self.timeout = 0.09
 		self.timer   = reactor.callLater(self.timeout, self.flushBuf)
 
 	def connectionFailed(self):
@@ -25,6 +26,7 @@ class SerialClient(Protocol):
 	def connectionMade(self):
 		if self.options.verbose >= 2:
 			log.msg("-- connected to serial device ---")
+		device_list.append(self)
 
 	def dataReceived(self, data):
 		if not self.timer.active():
@@ -37,7 +39,7 @@ class SerialClient(Protocol):
 				log.err("!! received data, but not connected to TCP/IP endpoint")
 			else:
 				if options.verbose >= 1:
-					log.msg("<< data: ", " ".join([hex(ord(c))[2:].zfill(2) for c in self.buf]))
+					log.msg(">> data: ", " ".join([hex(ord(c))[2:].zfill(2) for c in self.buf]))
 				self.network.notifyAll(self.buf)
 				self.buf = ""
 
@@ -51,7 +53,9 @@ class NetworkClient(Protocol):
 
 	def dataReceived(self, data):
 		if options.verbose >= 1:
-			log.msg("<< ", " ".join([hex(ord(c))[2:].zfill(2) for c in self.buf]))
+			log.msg("<< data:", " ".join([hex(ord(c))[2:].zfill(2) for c in data]))
+		for com in device_list:
+			com.transport.write(data)
 
 	def connectionLost(self, reason):
 		if self.options.verbose >= 2:
