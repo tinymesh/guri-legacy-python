@@ -9,6 +9,7 @@ log.startLogging(sys.stdout)
 
 client_list = []
 device_list = []
+recv_ack = True
 
 class SerialClient(Protocol):
 	def __init__(self, network, options):
@@ -40,8 +41,15 @@ class SerialClient(Protocol):
 			else:
 				if options.verbose >= 1:
 					log.msg(">> data: ", " ".join([hex(ord(c))[2:].zfill(2) for c in self.buf]))
+				recv_ack = False
 				self.network.notifyAll(self.buf)
+				reactor.callLater(1, self.checkRecvACK, [self.buf])
 				self.buf = ""
+
+	def checkRecvACK(self, buf):
+		if not recv_ack:
+			reactor.stop()
+			self.network.notifyAll(buf)
 
 class NetworkClient(Protocol):
 	options = None
@@ -55,6 +63,8 @@ class NetworkClient(Protocol):
 		if options.verbose >= 1:
 			log.msg("<< data:", " ".join([hex(ord(c))[2:].zfill(2) for c in data]))
 		for com in device_list:
+			if 6 == ord(data[0]):
+				recv_ack = True
 			com.transport.write(data)
 
 	def connectionLost(self, reason):
@@ -115,7 +125,8 @@ if __name__ == '__main__':
 
 	parser.add_argument('--port',  '-p',
 		metavar  = '<port>',
-		default  = 7000,
+		default  = 7001,
+		type     = int,
 		dest     = 'port',
 		help     = 'Remote port')
 
